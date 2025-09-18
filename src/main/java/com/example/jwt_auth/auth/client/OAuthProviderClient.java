@@ -15,6 +15,8 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @Component
@@ -31,11 +33,11 @@ public class OAuthProviderClient {
     /**
      * Provider와 Authorization Code를 받아 Access Token 발급을 요청합니다.
      */
-    public Mono<String> getAccessToken(OAuthProvider provider, String code) {
+    public Mono<String> getAccessToken(OAuthProvider provider, String authorizationCode) {
         return switch (provider) {
-            case GOOGLE -> fetchGoogleAccessToken(code);
-            case KAKAO -> fetchKakaoAccessToken(code);
-            case NAVER -> fetchNaverAccessToken(code);
+            case GOOGLE -> fetchGoogleAccessToken(authorizationCode);
+            case KAKAO -> fetchKakaoAccessToken(authorizationCode);
+            case NAVER -> fetchNaverAccessToken(authorizationCode);
             default -> Mono.error(new IllegalArgumentException("지원하지 않는 Provider 입니다: " + provider));
         };
     }
@@ -44,13 +46,17 @@ public class OAuthProviderClient {
      * Google OAuth Access Token 발급을 요청
      */
     private Mono<String> fetchGoogleAccessToken(String code) {
+        // Authorization Code 디코딩 처리
+        String decodedCode = URLDecoder.decode(code, StandardCharsets.UTF_8);
+
         OAuthProperties.Google google = oAuthProperties.google();
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", google.clientId());
         formData.add("client_secret", google.clientSecret());
         formData.add("redirect_uri", google.redirectUri());
-        formData.add("code", code);
+        formData.add("code", decodedCode);
 
         return webClient.post()
                 .uri("https://oauth2.googleapis.com/token")
@@ -64,14 +70,15 @@ public class OAuthProviderClient {
     /**
      * Kakao OAuth Access Token 발급을 요청
      */
-    private Mono<String> fetchKakaoAccessToken(String code) {
+    private Mono<String> fetchKakaoAccessToken(String authorizationCode) {
         OAuthProperties.Kakao kakao = oAuthProperties.kakao();
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", kakao.clientId());
         formData.add("redirect_uri", kakao.redirectUri());
-        formData.add("code", code);
-        // Kakao 보안 설정에서 Client Secret을 사용하도록 설정했다면 아래 코드를 추가
+        formData.add("code", authorizationCode);
+
         if (kakao.clientSecret() != null && !kakao.clientSecret().isBlank()) {
             formData.add("client_secret", kakao.clientSecret());
         }
@@ -88,13 +95,14 @@ public class OAuthProviderClient {
     /**
      * Naver OAuth Access Token 발급을 요청
      */
-    private Mono<String> fetchNaverAccessToken(String code) {
+    private Mono<String> fetchNaverAccessToken(String authorizationCode) {
         OAuthProperties.Naver naver = oAuthProperties.naver();
         MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+
         formData.add("grant_type", "authorization_code");
         formData.add("client_id", naver.clientId());
         formData.add("client_secret", naver.clientSecret());
-        formData.add("code", code);
+        formData.add("code", authorizationCode);
 
         return webClient.post()
                 .uri("https://nid.naver.com/oauth2.0/token")
@@ -118,7 +126,7 @@ public class OAuthProviderClient {
     }
 
     /**
-     * Google OAuth 사용자 정보 조회 (비동기)
+     * Google OAuth 사용자 정보 조회
      */
     private Mono<OAuthUserInfo> fetchGoogleUserInfo(String oauthAccessToken) {
         return webClient.get()
@@ -131,7 +139,7 @@ public class OAuthProviderClient {
     }
 
     /**
-     * Kakao OAuth 사용자 정보 조회 (비동기)
+     * Kakao OAuth 사용자 정보 조회
      */
     private Mono<OAuthUserInfo> fetchKakaoUserInfo(String oauthAccessToken) {
         return webClient.get()
@@ -144,7 +152,7 @@ public class OAuthProviderClient {
     }
 
     /**
-     * Naver OAuth 사용자 정보 조회 (비동기)
+     * Naver OAuth 사용자 정보 조회
      */
     private Mono<OAuthUserInfo> fetchNaverUserInfo(String oauthAccessToken) {
         return webClient.get()

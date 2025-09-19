@@ -50,11 +50,11 @@ oauth:
   kakao:
     client-id: ${OAUTH_KAKAO_CLIENT_ID}
     client-secret: ${OAUTH_KAKAO_CLIENT_SECRET}
-    redirect-uri: ${OAUTH_KAKAO_REDIRECT_URI:http://localhost:3000/auth/kakao/callback}
+    redirect-uri: ${OAUTH_KAKAO_REDIRECT_URI:http://localhost:8081/oauth/kakao}
   naver:
     client-id: ${OAUTH_NAVER_CLIENT_ID}
     client-secret: ${OAUTH_NAVER_CLIENT_SECRET}
-    redirect-uri: ${OAUTH_NAVER_REDIRECT_URI:http://localhost:3000/auth/naver/callback}
+    redirect-uri: ${OAUTH_NAVER_REDIRECT_URI:http://localhost:8081/oauth/naver}
 
 jwt:
   # 시크릿 키는 Git에 공개하지 않아야 합니다.(현재는 임시 허용)

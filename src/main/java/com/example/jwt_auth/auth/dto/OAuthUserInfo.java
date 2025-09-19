@@ -19,33 +19,56 @@ public record OAuthUserInfo(
 
     public record KakaoUserResponse(
             Long id,
-            String email,
-            String nickname,
-            String profileImageUrl
+            Properties properties,
+            KakaoAccount kakao_account
     ) {
+        public record Properties(
+                String nickname,
+                String profile_image,
+                String thumbnail_image
+        ) {}
+
+        public record KakaoAccount(
+                Profile profile,
+                String email
+        ) {
+            public record Profile(
+                    String nickname,
+                    String profile_image_url,
+                    String thumbnail_image_url
+            ) {}
+        }
+
         public OAuthUserInfo toOAuthUserInfo() {
             return new OAuthUserInfo(
                     String.valueOf(id),
-                    email,
-                    nickname,
-                    profileImageUrl
+                    kakao_account.email,
+                    kakao_account.profile.nickname,
+                    kakao_account.profile.profile_image_url
             );
         }
     }
 
     public record NaverUserResponse(
-            String id,
-            String email,
-            String nickname,
-            String profileImageUrl
+            String resultcode,
+            String message,
+            Response response
     ) {
+        public record Response(
+                String id,
+                String nickname,
+                String profile_image,
+                String email
+        ) {}
+
         public OAuthUserInfo toOAuthUserInfo() {
             return new OAuthUserInfo(
-                    id,
-                    email,
-                    nickname,
-                    profileImageUrl
+                    response.id(),
+                    response.email(),
+                    response.nickname(),
+                    response.profile_image()
             );
         }
     }
+
 }
